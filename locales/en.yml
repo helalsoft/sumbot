@@ -1,0 +1,100 @@
+extName: SumBot
+extDescription: >-
+  Send web pages and YouTube videos to AI chatbots for instant summaries and insights.
+optionsTitle: SumBot Options
+sendingContentMessage: Sending content...
+scrollToTop: Scroll to top
+commandKeyExists: Command key already exists
+failedToSaveCommand: Failed to save command
+resetCommandsConfirmation: >-
+  Are you sure you want to reset all commands to default? This action cannot be
+  undone.
+sumbotLogo: SumBot Logo
+modelSectionTitle: Default Model
+commandsSectionTitle: Commands
+resetButton: Reset
+addButton: Add
+defaultModelLabel: Default
+variablesSectionTitle: Variables
+variablesInfoPopup: >-
+  Variables are reusable placeholders that can be used in command prompts. Use
+  them to customize your prompts with dynamic values. Default variables like
+  'content', 'title', 'url', and 'timestamp' are always available. You can add
+  up to $1 custom variables.
+newVariable: New Variable
+variableName: Variable Name
+variableValue: Variable Value
+variableNamePlaceholder: e.g. rules
+variableValuePlaceholder: e.g. Be concise and specific
+addVariableButton: Add Variable
+cancelButton: Cancel
+saveButton: Save
+deleteButton: Delete
+editButton: Edit
+variableNameEmpty: Variable name cannot be empty
+variableValueEmpty: Variable value cannot be empty
+variableKeyExists: Variable key already exists
+maxVariablesReached: You can only add up to $1 variables
+resetVariablesConfirmation: >-
+  Are you sure you want to reset all variables to default? This action cannot be
+  undone.
+commandNameRequired: Command name is required
+promptTemplateRequired: Prompt template is required
+selectValidContext: Please select a valid context
+newCommand: New Command
+editCommand: Edit Command
+addCommandButton: Add Command
+defaultLabel: Default
+customLabel: Custom
+deleteCommandConfirmation: Are you sure you want to delete this command? This action cannot be undone.
+commandName: Command Name
+commandNamePlaceholder: e.g. Summarize Code
+contextLabel: Context
+pageContext: Page
+youtubeContext: YouTube
+promptTemplate: Prompt Template
+promptTemplatePlaceholder: Use {{variables}} for dynamic content
+insertVariable: Insert variable
+summarizeTextPrompt: >-
+  Summarize the following in 3 to 5 bullet points. In your summarization, always
+  use $1: Title: $2, Content: $3
+summarizeTranscriptPrompt: >-
+  Summarize the following YouTube transcript in 3 to 5 bullet points. The transcript includes timestamps in [MM:SS] format at the beginning of each line. In your summarization, include key timestamps for important points and always use $1: Title: $2, Transcript: $3
+defaultCommandsTitle: Default Commands
+defaultCommandsInfoPopup: >-
+  These commands are executed when the extension icon is clicked. The page
+  command is used for regular web page text, while the YouTube command is used
+  for YouTube video transcripts.
+pageCommandTitle: Page Command
+youtubeCommandTitle: YouTube Command
+language: English
+defaultCommandPage: Summarize Text
+defaultCommandYoutube: Summarize Transcript
+textCommandsMenuTitle: Text Commands
+youtubeCommandsMenuTitle: YouTube Commands
+importSettingsError: Something went wrong with the import. Please check your file format.
+importSettingsSuccess: Your settings have been successfully restored!
+importConfirmation: >-
+  This will replace all your current settings with the ones from the backup
+  file. Continue?
+exportFilename: sumbot_settings.json
+settingsManagementText: You can {{backup}} or {{restore}} your options here
+modelLabel: Model
+conditionsLabel: Conditions
+conditionsDescription: You can use different models based on token count. You can add multiple conditions. When the prompt token count exceeds the threshold you specify, the corresponding alternative model is automatically used. If multiple thresholds are exceeded, the model with the highest exceeded threshold is selected.
+addConditionButton: Add Condition
+tokenThresholdLabel: Token Threshold
+
+alternativeModelLabel: Alternative Model
+removeConditionButton: Remove
+commandsInfoPopup: Commands can be assigned as default actions for the extension button or used in context menus.
+processing: Processing
+maxCharactersExceeded: "Maximum character limit (32) exceeded"
+htmlVariableInfoPopup: The HTML variable contains the raw HTML of the page. Commands using this variable will not appear in the selection context menu.
+fullPageContentVariableInfoPopup: Contains the full page content including title and all visible text from the page. Commands using this variable will not appear in the selection context menu.
+buyMeCoffee: Buy Me A Coffee
+supportMe: Support Me
+generateTodoList: Generate To-Do List
+generateTodoListPrompt: >-
+  Generate a to-do list for the following text in $1: $2
+noContentExtracted: No content extracted.

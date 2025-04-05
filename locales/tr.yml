@@ -1,0 +1,99 @@
+extName: SumBot
+extDescription: >-
+  Web sayfalarını ve YouTube videolarını özetlemek için yapay zeka botlarına gönderir.
+optionsTitle: SumBot Ayarları
+sendingContentMessage: İçerik gönderiliyor...
+scrollToTop: Yukarı kaydır
+commandKeyExists: Komut anahtarı zaten mevcut
+failedToSaveCommand: Komut kaydedilemedi
+resetCommandsConfirmation: >-
+  Tüm komutları varsayılana sıfırlamak istediğinizden emin misiniz? Bu işlem
+  geri alınamaz.
+sumbotLogo: SumBot Logosu
+modelSectionTitle: Varsayılan Model
+commandsSectionTitle: Komutlar
+resetButton: Sıfırla
+addButton: Ekle
+defaultModelLabel: Varsayılan
+variablesSectionTitle: Değişkenler
+variablesInfoPopup: >-
+  Değişkenler, komut istemlerini özelleştirmek için kullanılan yer
+  tutucularıdır. 'content', 'title', 'url' ve 'timestamp' varsayılan
+  değişkenlerdir. En fazla $1 özel değişken ekleyebilirsiniz.
+newVariable: Yeni Değişken
+variableName: Değişken Adı
+variableValue: Değişken Değeri
+variableNamePlaceholder: örn. kurallar
+variableValuePlaceholder: örn. Kısa ve öz ol
+addVariableButton: Değişken Ekle
+cancelButton: İptal
+saveButton: Kaydet
+deleteButton: Sil
+editButton: Düzenle
+variableNameEmpty: Değişken adı boş olamaz
+variableValueEmpty: Değişken değeri boş olamaz
+variableKeyExists: Değişken anahtarı zaten mevcut
+maxVariablesReached: En fazla $1 değişken ekleyebilirsiniz
+resetVariablesConfirmation: >-
+  Tüm değişkenleri varsayılana sıfırlamak istediğinizden emin misiniz? Bu işlem
+  geri alınamaz.
+commandNameRequired: Komut adı gereklidir
+promptTemplateRequired: İstem şablonu gereklidir
+selectValidContext: Lütfen geçerli bir bağlam seçin
+newCommand: Yeni Komut
+editCommand: Komutu Düzenle
+addCommandButton: Komut Ekle
+defaultLabel: Varsayılan
+customLabel: Özel
+deleteCommandConfirmation: Bu komutu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+commandName: Komut Adı
+commandNamePlaceholder: örn. Kodu Özetle
+contextLabel: Bağlam
+pageContext: Sayfa
+youtubeContext: YouTube
+promptTemplate: İstem Şablonu
+promptTemplatePlaceholder: Dinamik içerik için {{değişkenler}} kullanın
+insertVariable: Değişken ekle
+defaultCommandsTitle: Varsayılan Komutlar
+defaultCommandsInfoPopup: >-
+  Bu komutlar, uzantı simgesine tıklandığında çalıştırılır. Sayfa komutu, normal
+  web sayfalarındaki metinler için kullanılırken, YouTube komutu YouTube video
+  transkriptleri için kullanılır.
+commandsInfoPopup: Komutlar, uzantı düğmesi için varsayılan eylem olarak atanabilir veya bağlam menülerinde kullanılabilir.
+pageCommandTitle: Sayfa Komutu
+youtubeCommandTitle: YouTube Komutu
+summarizeTextPrompt: >-
+  Aşağıdakileri 3-5 madde halinde özetle. Özetlemende her zaman $1 kullan:
+  Başlık: $2, İçerik: $3
+summarizeTranscriptPrompt: >-
+  Aşağıdaki YouTube transkriptini 3-5 madde halinde özetle. Transkript, her satırın başında [DD:SS-DD:SS] formatında zaman damgaları içerir. Özetlemende önemli noktalar için anahtar zaman damgalarını dahil et ve her zaman $1 dilini kullan: Başlık: $2, Transkript: $3
+language: Türkçe
+defaultCommandPage: Metin Özetle
+defaultCommandYoutube: Transkript Özetle
+textCommandsMenuTitle: Metin Komutları
+youtubeCommandsMenuTitle: YouTube Komutları
+importSettingsError: Ayarlar yüklenirken bir sorun oluştu. Lütfen dosya formatını kontrol edin.
+importSettingsSuccess: Ayarlarınız başarıyla yüklendi!
+importConfirmation: >-
+  Bu işlem, mevcut tüm ayarlarınızı yedek dosyasındakilerle değiştirecektir.
+  Devam etmek istiyor musunuz?
+exportFilename: sumbot_ayarlar.json
+settingsManagementText: Ayarlarınızı buradan {{yedekleyin}} veya {{geri yükleyin}}
+modelLabel: Model
+conditionsLabel: Koşullar
+conditionsDescription: Token sayısına göre farklı modeller kullanabilirsiniz. Birden fazla koşul ekleyebilirsiniz. Prompt token sayısı belirttiğiniz eşiği aştığında, ilgili alternatif model otomatik olarak kullanılır. Birden fazla eşik aşılırsa, aşılan en yüksek eşiğe ait model seçilir.
+addConditionButton: Koşul Ekle
+tokenThresholdLabel: Token Eşiği
+
+alternativeModelLabel: Alternatif Model
+removeConditionButton: Kaldır
+processing: İşleniyor
+maxCharactersExceeded: "Maksimum karakter sınırı (32) aşıldı"
+htmlVariableInfoPopup: HTML değişkeni, sayfanın ham HTML içeriğini içerir. Bu değişkeni kullanan komutlar, seçim bağlam menüsünde görünmeyecektir.
+fullPageContentVariableInfoPopup: Sayfanın başlığı ve tüm görünür metni dahil olmak üzere tam sayfa içeriğini içerir. Bu değişkeni kullanan komutlar, seçim bağlam menüsünde görünmeyecektir.
+buyMeCoffee: Kahve Ismarla
+supportMe: Destek Ol
+generateTodoList: Yapılacaklar Listesi Oluştur
+generateTodoListPrompt: >-
+  Aşağıdaki metin için $1 dilinde bir yapılacaklar listesi oluştur: $2
+noContentExtracted: İçeriğe erişilemedi.
