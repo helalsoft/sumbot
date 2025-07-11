@@ -27,7 +27,7 @@ SumBot is a browser extension that helps users get summaries of web page content
 1. Clone this repository:
 
    ```bash
-   git clone https://github.com/yourusername/sumbot.git
+   git clone https://github.com/helalsoft/sumbot.git
    cd sumbot
    ```
 
