@@ -49,7 +49,7 @@ export async function submitPromptToTextarea(
     case inputEl instanceof HTMLDivElement:
       console.log("Simulating input for HTMLDivElement");
       inputEl.focus();
-      document.execCommand("insertText", false, "Your simulated paste text");
+      document.execCommand("insertText", false, promptText);
       break;
     default:
       console.error("Unexpected element type:", inputEl);
