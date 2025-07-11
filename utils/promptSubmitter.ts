@@ -32,10 +32,7 @@ export async function submitPromptToTextarea(
 
   // Find input element with retries
   console.log("Searching for input element...");
-  const inputEl = await findElement<HTMLTextAreaElement | HTMLParagraphElement>(
-    model.input,
-    "input"
-  );
+  const inputEl = await findElement<HTMLElement>(model.input, "input");
 
   console.log("Found input element, setting value", inputEl);
 
@@ -48,6 +45,11 @@ export async function submitPromptToTextarea(
     case inputEl instanceof HTMLParagraphElement:
       console.log("Setting innerText for HTMLParagraphElement");
       inputEl.innerText = promptText;
+      break;
+    case inputEl instanceof HTMLDivElement:
+      console.log("Simulating input for HTMLDivElement");
+      inputEl.focus();
+      document.execCommand("insertText", false, "Your simulated paste text");
       break;
     default:
       console.error("Unexpected element type:", inputEl);

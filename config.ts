@@ -70,8 +70,8 @@ export const models = {
   },
   Perplexity: {
     url: "https://perplexity.ai/",
-    input: ["div textarea"],
-    button: ["button:has(svg.tabler-icon-arrow-right)"],
+    input: [`div#ask-input[contenteditable="true"][data-lexical-editor="true"]`],
+    button: [`button[data-testid="submit-button"]`],
   },
   Grok: {
     url: "https://x.com/i/grok",
