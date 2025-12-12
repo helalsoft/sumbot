@@ -11,14 +11,64 @@ import { isYouTube, getUrlParameter } from "@/utils/url";
 import { STORAGE_KEYS, getStorageItemSafe } from "@/utils/storage";
 import { i18n } from "#i18n";
 
-let processingTabs = new Set<number>();
+// Track processing tabs
+const processingTabs = new Set<number>();
+// Track tab loading states: true = fully loaded, false = loading
+const tabLoadedStates = new Map<number, boolean>();
+
+/**
+ * Checks if a URL is a chrome browser page (chrome://, edge://, about:, etc.)
+ */
+function isBrowserPage(url: string | undefined): boolean {
+  if (!url) return true;
+  return (
+    url.startsWith("chrome://") ||
+    url.startsWith("chrome-extension://") ||
+    url.startsWith("edge://") ||
+    url.startsWith("about:") ||
+    url.startsWith("moz-extension://") ||
+    url.startsWith("file://")
+  );
+}
+
+/**
+ * Determines the icon state for a tab based on its current status
+ */
+function getTabIconState(tabId: number, url: string | undefined): IconStateType {
+  // Check if processing
+  if (processingTabs.has(tabId)) {
+    return "processing";
+  }
+
+  // Check if browser page or matching model URL
+  if (isBrowserPage(url) || isMatchingUrl(url)) {
+    return "disabled";
+  }
+
+  // Check if tab is fully loaded
+  const isLoaded = tabLoadedStates.get(tabId);
+  if (isLoaded === false) {
+    return "disabled";
+  }
+
+  return "default";
+}
+
+/**
+ * Updates the icon for a specific tab based on its current state
+ */
+async function updateTabIcon(tabId: number, url: string | undefined): Promise<void> {
+  const state = getTabIconState(tabId, url);
+  await setIconState(state, tabId);
+}
 
 async function setIconState(state: IconStateType, tabId?: number): Promise<void> {
   try {
-    console.log(`Setting icon to ${state} state`);
+    console.log(`Setting icon to ${state} state for tab ${tabId}`);
 
     if (tabId && tabId > -1) {
-      await browserAction.setIcon({ path: iconPaths[state] });
+      // Set icon per-tab
+      await browserAction.setIcon({ path: iconPaths[state], tabId });
 
       switch (state) {
         case "processing":
@@ -378,42 +428,43 @@ export default defineBackground(() => {
     handleContextMenuClick(info, tab)
   );
 
-  // Add listener for tab changes
+  // Add listener for when user switches to a different tab
   browser.tabs.onActivated.addListener(async activeInfo => {
     const tabId = activeInfo.tabId;
     try {
       const tab = await browser.tabs.get(tabId);
-      if (isMatchingUrl(tab.url)) {
-        if (browserAction.disable) {
-          await browserAction.disable(tabId);
-        }
-      } else {
-        if (browserAction.enable) {
-          await browserAction.enable(tabId);
-        }
-      }
+      // Update icon for the newly active tab based on its state
+      await updateTabIcon(tabId, tab.url);
     } catch (error) {
       console.error("Error getting tab:", error);
     }
   });
 
-  // Add listener for tab changes
+  // Add listener for tab updates (loading, URL changes, etc.)
   browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-    // Check if the tab has completed loading
-    if (changeInfo.status === "complete") {
-      // Check for URL parameters on model websites
-      await handleUrlParameters(tab);
+    // Track loading state
+    if (changeInfo.status === "loading") {
+      tabLoadedStates.set(tabId, false);
+      await updateTabIcon(tabId, tab.url);
     }
 
-    // Handle icon state based on URL
-    if (isMatchingUrl(tab.url)) {
-      if (browserAction.disable) {
-        await browserAction.disable(tabId);
-      }
-    } else {
-      if (browserAction.enable) {
-        await browserAction.enable(tabId);
-      }
+    // Check if the tab has completed loading
+    if (changeInfo.status === "complete") {
+      tabLoadedStates.set(tabId, true);
+      // Check for URL parameters on model websites
+      await handleUrlParameters(tab);
+      await updateTabIcon(tabId, tab.url);
     }
+
+    // Handle URL changes (e.g., navigation within the same tab)
+    if (changeInfo.url !== undefined) {
+      await updateTabIcon(tabId, changeInfo.url);
+    }
+  });
+
+  // Clean up when tabs are closed
+  browser.tabs.onRemoved.addListener(tabId => {
+    tabLoadedStates.delete(tabId);
+    processingTabs.delete(tabId);
   });
 });
