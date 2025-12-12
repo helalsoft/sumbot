@@ -41,13 +41,14 @@ export const ModelNameSchema = z.enum([
   "Perplexity",
   "Grok",
   "Gemini",
+  "AI Studio",
   "Claude",
   "DeepSeek",
 ]);
 
 export type ModelName = z.infer<typeof ModelNameSchema>;
 
-export const DEFAULT_MODEL: ModelName = "ChatGPT";
+export const DEFAULT_MODEL: ModelName = "Gemini";
 
 const ModelDetailsSchema = z.object({
   url: z.string().url("Invalid URL"),
@@ -77,13 +78,18 @@ export const models = {
     url: "https://x.com/i/grok",
     input: ["div div div textarea"],
     button: [
-      "div + div > button:has(path[d='M12 3.59l7.457 7.45-1.414 1.42L13 7.41V21h-2V7.41l-5.043 5.05-1.414-1.42L12 3.59z'])",
+      "button[aria-label*='Grok'][type='button']:has(svg path[d='M12 3.59l7.457 7.45-1.414 1.42L13 7.41V21h-2V7.41l-5.043 5.05-1.414-1.42L12 3.59z'])",
     ],
   },
   Gemini: {
+    url: "https://gemini.google.com/app",
+    input: ["rich-textarea .ql-editor[contenteditable='true']"],
+    button: ["button[mat-icon-button].send-button mat-icon[fonticon='send']"],
+  },
+  "AI Studio": {
     url: "https://aistudio.google.com/prompts/new_chat",
-    input: ["ms-autosize-textarea textarea"],
-    button: ["button:has(mat-icon)"],
+    input: ["ms-prompt-box textarea[formcontrolname='promptText']"],
+    button: ["button[ms-button][type='submit']"],
     cleanInput: true,
   },
   Claude: {
@@ -96,8 +102,8 @@ export const models = {
   },
   DeepSeek: {
     url: "https://chat.deepseek.com/",
-    input: ["#chat-input"],
-    button: ["div[role='button']:last-child"],
+    input: ["textarea.ds-scroll-area[placeholder*='DeepSeek']"],
+    button: ["div.ds-icon-button[role='button']:has(svg path[d*='M8.3125 0.981587'])"],
   },
 } as const satisfies ModelList;
 
@@ -133,35 +139,17 @@ export const DEFAULT_COMMANDS = {
     name: i18n.t("generateTodoList"),
     prompt: i18n.t("generateTodoListPrompt", ["{{language}}", "{{content}}"]),
     context: "page",
-    removable: true,
-    conditions: [
-      {
-        tokenThreshold: 4000,
-        alternativeModel: "Gemini",
-      },
-    ],
+    removable: true
   },
   summarizeText: {
     name: i18n.t("defaultCommandPage"),
     prompt: i18n.t("summarizeTextPrompt", ["{{language}}", "{{title}}", "{{content}}"]),
-    context: "page",
-    conditions: [
-      {
-        tokenThreshold: 4000,
-        alternativeModel: "Gemini",
-      },
-    ],
+    context: "page"
   },
   summarizeTranscript: {
     name: i18n.t("defaultCommandYoutube"),
     prompt: i18n.t("summarizeTranscriptPrompt", ["{{language}}", "{{title}}", "{{content}}"]),
-    context: "youtube",
-    conditions: [
-      {
-        tokenThreshold: 4000,
-        alternativeModel: "Gemini",
-      },
-    ],
+    context: "youtube"
   },
 } as const satisfies CommandList;
 
