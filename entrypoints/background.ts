@@ -293,7 +293,7 @@ async function createDynamicContextMenus(): Promise<void> {
       contexts: ["selection"],
     });
 
-    // Create parent menu for page context - exclude YouTube domains
+    // Create parent menu for page context (visibility is dynamically updated to hide on YouTube)
     browser.contextMenus.create({
       id: "sumbot-page",
       title: i18n.t("textCommandsMenuTitle"),
@@ -326,7 +326,7 @@ async function createDynamicContextMenus(): Promise<void> {
         });
       }
 
-      // Handle commands for regular pages
+      // Handle commands for regular pages (exclude YouTube via dynamic visibility)
       if (!command.context || command.context === "page") {
         // Show page commands on the regular page context menu
         browser.contextMenus.create({
@@ -337,9 +337,9 @@ async function createDynamicContextMenus(): Promise<void> {
         });
       }
 
-      // Handle YouTube-specific commands and commands without a specific context
-      if (command.context === "youtube" || !command.context) {
-        // Show on YouTube pages
+      // Handle YouTube-specific commands only (not page commands on YouTube)
+      if (command.context === "youtube") {
+        // Show only YouTube-specific commands on YouTube pages
         browser.contextMenus.create({
           id: `youtube-${commandId}`,
           title: command.name,
@@ -352,6 +352,23 @@ async function createDynamicContextMenus(): Promise<void> {
     console.log("Dynamic context menus created successfully");
   } catch (error) {
     console.error("Error creating dynamic context menus:", error);
+  }
+}
+
+/**
+ * Updates the visibility of the page context menu based on the current URL.
+ * Hides the page menu on YouTube pages to avoid showing text commands.
+ */
+async function updatePageMenuVisibility(url: string | undefined): Promise<void> {
+  try {
+    const onYouTube = url ? isYouTube(url) : false;
+    // Hide the page menu on YouTube, show it on other pages
+    browser.contextMenus.update("sumbot-page", {
+      visible: !onYouTube,
+    });
+  } catch (error) {
+    // Menu might not exist yet, ignore the error
+    console.debug("Could not update page menu visibility:", error);
   }
 }
 
@@ -483,6 +500,8 @@ export default defineBackground(() => {
       const tab = await browser.tabs.get(tabId);
       // Update icon for the newly active tab based on its state
       await updateTabIcon(tabId, tab.url);
+      // Update page menu visibility based on whether we're on YouTube
+      await updatePageMenuVisibility(tab.url);
     } catch (error) {
       console.error("Error getting tab:", error);
     }
@@ -502,6 +521,8 @@ export default defineBackground(() => {
       // Check for URL parameters on model websites
       await handleUrlParameters(tab);
       await updateTabIcon(tabId, tab.url);
+      // Update page menu visibility based on whether we're on YouTube
+      await updatePageMenuVisibility(tab.url);
     }
 
     // Handle URL changes (e.g., navigation within the same tab)
@@ -509,6 +530,8 @@ export default defineBackground(() => {
       // Clear processed URL params flag when URL changes
       processedUrlParams.delete(tabId);
       await updateTabIcon(tabId, changeInfo.url);
+      // Update page menu visibility based on whether we're on YouTube
+      await updatePageMenuVisibility(changeInfo.url);
     }
   });
 
