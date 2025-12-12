@@ -11,7 +11,7 @@ export default defineConfig({
     default_locale: "en",
     action: {
       default_title: "__MSG_extName__",
-      default_icon: "icon/default/16.png",
+      default_icon: "icon/disabled/16.png",
     },
     icons: {
       16: "icon/default/16.png",
