@@ -2,7 +2,7 @@
   "name": "sumbot",
   "description": "A browser extension that sends page content to a chat model for summary",
   "private": true,
-  "version": "1.2.1",
+  "version": "1.2.2",
   "type": "module",
   "scripts": {
     "dev": "wxt",
