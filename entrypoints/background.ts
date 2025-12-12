@@ -112,52 +112,55 @@ async function setIconState(
   }
 }
 
-async function processTab(tab: chrome.tabs.Tab): Promise<void> {
+function processTab(tab: chrome.tabs.Tab): void {
   // Prevent processing if the tab is already being processed
   if (processingTabs.has(tab.id!)) {
     console.log("Tab is already being processed, ignoring click");
     return;
   }
 
-  console.log("Extension clicked - starting process");
+  // Initialize a dedicated async thread for this tab processing
+  // This ensures non-blocking execution when the function is invoked repeatedly
+  (async () => {
+    console.log("Extension clicked - starting process");
 
-  try {
-    processingTabs.add(tab.id!);
-    // Only update icon state, don't show overlay on source tab
-    await setIconState("processing", tab.id, false);
-    console.log("Starting content extraction");
+    try {
+      processingTabs.add(tab.id!);
+      // Only update icon state, don't show overlay on source tab
+      await setIconState("processing", tab.id, false);
+      console.log("Starting content extraction");
 
-    // Check if the URL is from YouTube using the shared utility function
-    const data = isYouTube(tab.url) ? await extractYoutubeTranscript() : await extractText();
+      // Check if the URL is from YouTube using the shared utility function
+      const data = isYouTube(tab.url) ? await extractYoutubeTranscript() : await extractText();
 
-    if (data.content.length === 0) {
-      sendMessage("showAlert", i18n.t("noContentExtracted"), tab.id && { tabId: tab.id });
-      throw new Error("No content extracted");
+      if (data.content.length === 0) {
+        sendMessage("showAlert", i18n.t("noContentExtracted"), tab.id && { tabId: tab.id });
+        throw new Error("No content extracted");
+      }
+
+      console.log("Submitting content to promptSubmitter");
+      const commandKey = await getCommandKey(data);
+      const promptText = await generatePrompt(data, commandKey);
+      const userCommands = await getStorageItemSafe(STORAGE_KEYS.USER_GENERATED_COMMANDS);
+      const overrideModel = userCommands[commandKey]?.model;
+
+      // Select the appropriate model based on text, command conditions, and override
+      const { model } = await selectModel(promptText, commandKey, overrideModel);
+
+      // Submit prompt - overlay will be shown on model page, not source tab
+      const overlayMessage = i18n.t("sendingContentMessage");
+      await Promise.all([
+        submitPrompt(promptText, model, overlayMessage),
+        setIconState("default", tab.id, false),
+      ]);
+    } catch (error) {
+      console.log("Error occurred during processing");
+      await setIconState("default", tab.id, false);
+      console.error("Error details:", error);
+    } finally {
+      processingTabs.delete(tab.id!);
     }
-
-    console.log("Submitting content to promptSubmitter");
-    const commandKey = await getCommandKey(data);
-    const promptText = await generatePrompt(data, commandKey);
-    const userCommands = await getStorageItemSafe(STORAGE_KEYS.USER_GENERATED_COMMANDS);
-    const overrideModel = userCommands[commandKey]?.model;
-
-    // Select the appropriate model based on text, command conditions, and override
-    const { model } = await selectModel(promptText, commandKey, overrideModel);
-
-    // Submit prompt - overlay will be shown on model page, not source tab
-    const overlayMessage = i18n.t("sendingContentMessage");
-    await Promise.all([
-      submitPrompt(promptText, model, overlayMessage),
-      setIconState("default", tab.id, false),
-    ]);
-  } catch (error) {
-    console.log("Error occurred during processing");
-    await setIconState("default", tab.id, false);
-    console.error("Error details:", error);
-    throw error;
-  } finally {
-    processingTabs.delete(tab.id!);
-  }
+  })();
 }
 
 // Helper function to check if the URL matches any of the models
