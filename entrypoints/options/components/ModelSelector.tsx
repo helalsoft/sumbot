@@ -41,10 +41,11 @@ const ModelSelector = ({ className = "" }: ModelSelectorProps) => {
 
   const handleTestAllModels = async () => {
     const testText = "Test";
+    const overlayMessage = i18n.t("sendingContentMessage");
     await Promise.all(
       Object.keys(models).map(async modelKey => {
         try {
-          await submitPrompt(testText, models[modelKey as ModelName]);
+          await submitPrompt(testText, models[modelKey as ModelName], overlayMessage);
         } catch (error) {
           console.error(`Failed to test model ${modelKey}:`, error);
         }
