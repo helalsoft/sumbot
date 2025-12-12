@@ -20,6 +20,8 @@ import { i18n } from "#i18n";
 const processingTabs = new Set<number>();
 // Track tab loading states: true = fully loaded, false = loading
 const tabLoadedStates = new Map<number, boolean>();
+// Track which tabs have already had their URL parameters processed
+const processedUrlParams = new Set<number>();
 
 /**
  * Checks if a URL is a chrome browser page (chrome://, edge://, about:, etc.)
@@ -213,6 +215,12 @@ async function handleUrlParameters(tab: { url?: string; id?: number }): Promise<
   const promptParam = getUrlParameter(tab.url, "sumbot_prompt");
   if (!promptParam) return;
 
+  // Prevent processing if the tab has already been processed for URL parameters
+  if (processedUrlParams.has(tab.id)) {
+    console.log("Tab URL parameters already processed, ignoring");
+    return;
+  }
+
   // Prevent processing if the tab is already being processed
   if (processingTabs.has(tab.id)) {
     console.log("Tab is already being processed, ignoring URL parameter");
@@ -223,6 +231,7 @@ async function handleUrlParameters(tab: { url?: string; id?: number }): Promise<
 
   try {
     processingTabs.add(tab.id);
+    processedUrlParams.add(tab.id);
     // Use icon state without overlay (overlay shown directly on model page)
     await setIconState("processing", tab.id, false);
 
@@ -494,6 +503,8 @@ export default defineBackground(() => {
 
     // Handle URL changes (e.g., navigation within the same tab)
     if (changeInfo.url !== undefined) {
+      // Clear processed URL params flag when URL changes
+      processedUrlParams.delete(tabId);
       await updateTabIcon(tabId, changeInfo.url);
     }
   });
@@ -502,5 +513,6 @@ export default defineBackground(() => {
   browser.tabs.onRemoved.addListener(tabId => {
     tabLoadedStates.delete(tabId);
     processingTabs.delete(tabId);
+    processedUrlParams.delete(tabId);
   });
 });
