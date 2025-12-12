@@ -4,7 +4,12 @@ import { models, iconPaths, type IconStateType, type Context, type ModelDetails 
 const browserAction = browser.action || browser.browserAction;
 import { ExtractedContent, extractText, extractYoutubeTranscript } from "@/utils/extractors";
 import { generatePrompt } from "@/utils/promptGenerator";
-import { submitPrompt, submitPromptToTextarea } from "@/utils/promptSubmitter";
+import {
+  submitPrompt,
+  submitPromptToTextarea,
+  injectProcessingOverlay,
+  removeProcessingOverlay,
+} from "@/utils/promptSubmitter";
 import { selectModel } from "@/utils/modelSelector";
 import { sendMessage } from "@/utils/messaging";
 import { isYouTube, getUrlParameter } from "@/utils/url";
@@ -62,7 +67,11 @@ async function updateTabIcon(tabId: number, url: string | undefined): Promise<vo
   await setIconState(state, tabId);
 }
 
-async function setIconState(state: IconStateType, tabId?: number): Promise<void> {
+async function setIconState(
+  state: IconStateType,
+  tabId?: number,
+  showOverlay = true
+): Promise<void> {
   try {
     console.log(`Setting icon to ${state} state for tab ${tabId}`);
 
@@ -90,8 +99,10 @@ async function setIconState(state: IconStateType, tabId?: number): Promise<void>
           break;
       }
 
-      // Notify content scripts about processing state
-      await sendMessage("toggleProcessingUI", state === "processing", tabId && { tabId });
+      // Notify content scripts about processing state (only if showOverlay is true)
+      if (showOverlay) {
+        await sendMessage("toggleProcessingUI", state === "processing", tabId && { tabId });
+      }
     }
   } catch (error) {
     console.error("Error setting icon state:", error);
@@ -110,7 +121,8 @@ async function processTab(tab: chrome.tabs.Tab): Promise<void> {
 
   try {
     processingTabs.add(tab.id!);
-    await setIconState("processing", tab.id);
+    // Only update icon state, don't show overlay on source tab
+    await setIconState("processing", tab.id, false);
     console.log("Starting content extraction");
 
     // Check if the URL is from YouTube using the shared utility function
@@ -130,10 +142,15 @@ async function processTab(tab: chrome.tabs.Tab): Promise<void> {
     // Select the appropriate model based on text, command conditions, and override
     const { model } = await selectModel(promptText, commandKey, overrideModel);
 
-    await Promise.all([submitPrompt(promptText, model), setIconState("default", tab.id)]);
+    // Submit prompt - overlay will be shown on model page, not source tab
+    const overlayMessage = i18n.t("sendingContentMessage");
+    await Promise.all([
+      submitPrompt(promptText, model, overlayMessage),
+      setIconState("default", tab.id, false),
+    ]);
   } catch (error) {
     console.log("Error occurred during processing");
-    await setIconState("default", tab.id);
+    await setIconState("default", tab.id, false);
     console.error("Error details:", error);
     throw error;
   } finally {
@@ -206,12 +223,21 @@ async function handleUrlParameters(tab: { url?: string; id?: number }): Promise<
 
   try {
     processingTabs.add(tab.id);
-    await setIconState("processing", tab.id);
+    // Use icon state without overlay (overlay shown directly on model page)
+    await setIconState("processing", tab.id, false);
+
+    // Inject overlay immediately on model page before waiting
+    const overlayMessage = i18n.t("sendingContentMessage");
+    await browser.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: injectProcessingOverlay,
+      args: [overlayMessage],
+    });
 
     // Wait for the page to fully load
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // Execute script to submit the prompt
+    // Execute script to submit the prompt (overlay will be removed after button click)
     await browser.scripting.executeScript({
       target: { tabId: tab.id },
       func: submitPromptToTextarea,
@@ -224,8 +250,15 @@ async function handleUrlParameters(tab: { url?: string; id?: number }): Promise<
     // await browser.tabs.update(tab.id, { url: cleanUrl.toString() });
   } catch (error) {
     console.error("Error handling URL parameter:", error);
+    // Remove overlay on error
+    if (tab.id) {
+      await browser.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: removeProcessingOverlay,
+      });
+    }
   } finally {
-    await setIconState("default", tab.id);
+    await setIconState("default", tab.id, false);
     processingTabs.delete(tab.id);
   }
 }
@@ -347,7 +380,8 @@ async function handleContextMenuClick(
     }
 
     processingTabs.add(tab.id);
-    await setIconState("processing", tab.id);
+    // Only update icon state, don't show overlay on source tab
+    await setIconState("processing", tab.id, false);
 
     try {
       let data;
@@ -377,7 +411,9 @@ async function handleContextMenuClick(
       // Select the appropriate model based on text, command conditions, and override
       const { model } = await selectModel(promptText, commandKey, overrideModel);
 
-      await submitPrompt(promptText, model);
+      // Submit prompt - overlay will be shown on model page, not source tab
+      const overlayMessage = i18n.t("sendingContentMessage");
+      await submitPrompt(promptText, model, overlayMessage);
 
       // Update command timestamp
       const timestamps = await getStorageItemSafe(STORAGE_KEYS.COMMAND_TIMESTAMPS);
@@ -388,7 +424,7 @@ async function handleContextMenuClick(
     } catch (error) {
       console.error("Error processing context menu command:", error);
     } finally {
-      await setIconState("default", tab.id);
+      await setIconState("default", tab.id, false);
       processingTabs.delete(tab.id);
     }
   } catch (error) {

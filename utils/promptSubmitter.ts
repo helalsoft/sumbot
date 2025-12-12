@@ -1,6 +1,56 @@
 import { type ModelDetails } from "@/config";
 import { browser } from "wxt/browser";
 
+/**
+ * Injects a processing overlay into the page
+ */
+function injectProcessingOverlay(message: string): void {
+  // Remove existing overlay if any
+  const existing = document.getElementById("sumbot-processing-overlay");
+  if (existing) existing.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "sumbot-processing-overlay";
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2147483647;
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+  `;
+  overlay.textContent = message;
+
+  // Add pulse animation
+  const style = document.createElement("style");
+  style.id = "sumbot-overlay-style";
+  style.textContent = `
+    @keyframes sumbot-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    #sumbot-processing-overlay {
+      animation: sumbot-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  `;
+  document.head.appendChild(style);
+  document.body.appendChild(overlay);
+}
+
+/**
+ * Removes the processing overlay from the page
+ */
+function removeProcessingOverlay(): void {
+  const overlay = document.getElementById("sumbot-processing-overlay");
+  const style = document.getElementById("sumbot-overlay-style");
+  if (overlay) overlay.remove();
+  if (style) style.remove();
+}
+
 export async function submitPromptToTextarea(
   promptText: string,
   model: ModelDetails
@@ -72,6 +122,12 @@ export async function submitPromptToTextarea(
   console.log("Found button element, clicking", buttonEl);
   buttonEl.click();
 
+  // Remove processing overlay after clicking the submit button
+  const overlay = document.getElementById("sumbot-processing-overlay");
+  const style = document.getElementById("sumbot-overlay-style");
+  if (overlay) overlay.remove();
+  if (style) style.remove();
+
   // Wait for 1 second
   await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -96,7 +152,11 @@ export async function submitPromptToTextarea(
   }
 }
 
-export async function submitPrompt(text: string, model: ModelDetails): Promise<void> {
+export async function submitPrompt(
+  text: string,
+  model: ModelDetails,
+  overlayMessage: string
+): Promise<void> {
   return new Promise(async (resolve, reject) => {
     try {
       // Create a new tab next to the current active tab
@@ -110,8 +170,28 @@ export async function submitPrompt(text: string, model: ModelDetails): Promise<v
         index: currentTab.index + 1,
       });
 
+      // Inject processing overlay immediately when DOM starts loading
+      const handleCommitted = async (details: { tabId: number; frameId: number }) => {
+        if (details.tabId !== tab.id || details.frameId !== 0) return;
+
+        // Remove listener immediately
+        browser.webNavigation.onCommitted.removeListener(handleCommitted);
+
+        // Inject the overlay immediately on the model page
+        if (tab.id !== undefined) {
+          await browser.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: injectProcessingOverlay,
+            args: [overlayMessage],
+          });
+        }
+      };
+
+      // Add listener for when navigation is committed (earliest point to inject)
+      browser.webNavigation.onCommitted.addListener(handleCommitted);
+
       // Use a one-time event listener to prevent multiple executions
-      const handleDOMContentLoaded = async (details: any) => {
+      const handleDOMContentLoaded = async (details: { tabId: number }) => {
         try {
           // Only proceed if this is the tab we created
           if (details.tabId !== tab.id) {
@@ -142,6 +222,8 @@ export async function submitPrompt(text: string, model: ModelDetails): Promise<v
           console.error("Error executing script:", error);
           // Remove the listener in case of error too
           browser.webNavigation.onDOMContentLoaded.removeListener(handleDOMContentLoaded);
+          // Also clean up committed listener if still active
+          browser.webNavigation.onCommitted.removeListener(handleCommitted);
           reject(error);
         }
       };
@@ -154,3 +236,5 @@ export async function submitPrompt(text: string, model: ModelDetails): Promise<v
     }
   });
 }
+
+export { injectProcessingOverlay, removeProcessingOverlay };
