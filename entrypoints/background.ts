@@ -472,6 +472,12 @@ async function getCommandKey(data: Partial<ExtractedContent>): Promise<string> {
 }
 
 export default defineBackground(() => {
+  // Set initial icon state to disabled to prevent spamming until page loads
+  browserAction.setIcon({ path: iconPaths.disabled });
+  if (browserAction.disable) {
+    browserAction.disable();
+  }
+
   // Use type assertion to handle type compatibility issues
   browserAction.onClicked.addListener((tab: any) => processTab(tab));
 
