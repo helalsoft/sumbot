@@ -11,7 +11,6 @@ import {
   removeProcessingOverlay,
 } from "@/utils/promptSubmitter";
 import { selectModel } from "@/utils/modelSelector";
-import { sendMessage } from "@/utils/messaging";
 import { isYouTube, getUrlParameter } from "@/utils/url";
 import { STORAGE_KEYS, getStorageItemSafe } from "@/utils/storage";
 import { i18n } from "#i18n";
@@ -69,11 +68,7 @@ async function updateTabIcon(tabId: number, url: string | undefined): Promise<vo
   await setIconState(state, tabId);
 }
 
-async function setIconState(
-  state: IconStateType,
-  tabId?: number,
-  showOverlay = true
-): Promise<void> {
+async function setIconState(state: IconStateType, tabId?: number): Promise<void> {
   try {
     console.log(`Setting icon to ${state} state for tab ${tabId}`);
 
@@ -100,11 +95,6 @@ async function setIconState(
           }
           break;
       }
-
-      // Notify content scripts about processing state (only if showOverlay is true)
-      if (showOverlay) {
-        await sendMessage("toggleProcessingUI", state === "processing", tabId && { tabId });
-      }
     }
   } catch (error) {
     console.error("Error setting icon state:", error);
@@ -127,14 +117,20 @@ function processTab(tab: chrome.tabs.Tab): void {
     try {
       processingTabs.add(tab.id!);
       // Only update icon state, don't show overlay on source tab
-      await setIconState("processing", tab.id, false);
+      await setIconState("processing", tab.id);
       console.log("Starting content extraction");
 
       // Check if the URL is from YouTube using the shared utility function
       const data = isYouTube(tab.url) ? await extractYoutubeTranscript() : await extractText();
 
       if (data.content.length === 0) {
-        sendMessage("showAlert", i18n.t("noContentExtracted"), tab.id && { tabId: tab.id });
+        if (tab.id) {
+          await browser.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: (msg: string) => alert(msg),
+            args: [i18n.t("noContentExtracted")],
+          });
+        }
         throw new Error("No content extracted");
       }
 
@@ -151,11 +147,11 @@ function processTab(tab: chrome.tabs.Tab): void {
       const overlayMessage = i18n.t("sendingContentMessage");
       await Promise.all([
         submitPrompt(promptText, model, overlayMessage),
-        setIconState("default", tab.id, false),
+        setIconState("default", tab.id),
       ]);
     } catch (error) {
       console.log("Error occurred during processing");
-      await setIconState("default", tab.id, false);
+      await setIconState("default", tab.id);
       console.error("Error details:", error);
     } finally {
       processingTabs.delete(tab.id!);
@@ -236,7 +232,7 @@ async function handleUrlParameters(tab: { url?: string; id?: number }): Promise<
     processingTabs.add(tab.id);
     processedUrlParams.add(tab.id);
     // Use icon state without overlay (overlay shown directly on model page)
-    await setIconState("processing", tab.id, false);
+    await setIconState("processing", tab.id);
 
     // Inject overlay immediately on model page before waiting
     const overlayMessage = i18n.t("sendingContentMessage");
@@ -270,7 +266,7 @@ async function handleUrlParameters(tab: { url?: string; id?: number }): Promise<
       });
     }
   } finally {
-    await setIconState("default", tab.id, false);
+    await setIconState("default", tab.id);
     processingTabs.delete(tab.id);
   }
 }
@@ -410,7 +406,7 @@ async function handleContextMenuClick(
 
     processingTabs.add(tab.id);
     // Only update icon state, don't show overlay on source tab
-    await setIconState("processing", tab.id, false);
+    await setIconState("processing", tab.id);
 
     try {
       let data;
@@ -426,7 +422,11 @@ async function handleContextMenuClick(
       }
 
       if (data.content.length === 0) {
-        sendMessage("showAlert", i18n.t("noContentExtracted"), tab.id && { tabId: tab.id });
+        await browser.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: (msg: string) => alert(msg),
+          args: [i18n.t("noContentExtracted")],
+        });
         throw new Error("No content extracted");
       }
 
@@ -453,7 +453,7 @@ async function handleContextMenuClick(
     } catch (error) {
       console.error("Error processing context menu command:", error);
     } finally {
-      await setIconState("default", tab.id, false);
+      await setIconState("default", tab.id);
       processingTabs.delete(tab.id);
     }
   } catch (error) {
