@@ -19,8 +19,8 @@ import { i18n } from "#i18n";
 const processingTabs = new Set<number>();
 // Track tab loading states: true = fully loaded, false = loading
 const tabLoadedStates = new Map<number, boolean>();
-// Track which tabs have already had their URL parameters processed
-const processedUrlParams = new Set<number>();
+// Track which tabs have already had their URL parameters processed (maps tabId to processed prompt)
+const processedUrlParams = new Map<number, string>();
 
 /**
  * Checks if a URL is a chrome browser page (chrome://, edge://, about:, etc.)
@@ -220,9 +220,9 @@ async function handleUrlParameters(tab: { url?: string; id?: number }): Promise<
   const promptParam = getUrlParameter(tab.url, "sumbot_prompt");
   if (!promptParam) return;
 
-  // Prevent processing if the tab has already been processed for URL parameters
-  if (processedUrlParams.has(tab.id)) {
-    console.log("Tab URL parameters already processed, ignoring");
+  // Prevent processing if this exact prompt has already been processed for this tab
+  if (processedUrlParams.get(tab.id) === promptParam) {
+    console.log("Tab URL parameters already processed with same prompt, ignoring");
     return;
   }
 
@@ -236,7 +236,7 @@ async function handleUrlParameters(tab: { url?: string; id?: number }): Promise<
 
   try {
     processingTabs.add(tab.id);
-    processedUrlParams.add(tab.id);
+    processedUrlParams.set(tab.id, promptParam);
     // Use icon state without overlay (overlay shown directly on model page)
     await setIconState("processing", tab.id);
 
@@ -558,8 +558,6 @@ export default defineBackground(() => {
 
     // Handle URL changes (e.g., navigation within the same tab)
     if (changeInfo.url !== undefined) {
-      // Clear processed URL params flag when URL changes
-      processedUrlParams.delete(tabId);
       await updateTabIcon(tabId, changeInfo.url);
       // Update page menu visibility based on whether we're on YouTube
       await updatePageMenuVisibility(changeInfo.url);
