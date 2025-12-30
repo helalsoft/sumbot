@@ -147,7 +147,7 @@ function processTab(tab: chrome.tabs.Tab): void {
       const overlayMessage = i18n.t("sendingContentMessage");
       const layoutErrorMessage = i18n.t("layoutChangedError");
       await Promise.all([
-        submitPrompt(promptText, model, overlayMessage, layoutErrorMessage),
+        submitPrompt(promptText, model, overlayMessage, layoutErrorMessage, data.title),
         setIconState("default", tab.id),
       ]);
     } catch (error) {
@@ -445,7 +445,7 @@ async function handleContextMenuClick(
       // Submit prompt - overlay will be shown on model page, not source tab
       const overlayMessage = i18n.t("sendingContentMessage");
       const layoutErrorMessage = i18n.t("layoutChangedError");
-      await submitPrompt(promptText, model, overlayMessage, layoutErrorMessage);
+      await submitPrompt(promptText, model, overlayMessage, layoutErrorMessage, data.title);
 
       // Update command timestamp
       const timestamps = await getStorageItemSafe(STORAGE_KEYS.COMMAND_TIMESTAMPS);

@@ -54,9 +54,14 @@ function removeProcessingOverlay(): void {
 export async function submitPromptToTextarea(
   promptText: string,
   model: ModelDetails,
-  layoutErrorMessage?: string
+  layoutErrorMessage?: string,
+  pageTitle?: string
 ): Promise<void> {
   console.log("Executing script in the tab");
+
+  if (pageTitle) {
+    document.title = pageTitle;
+  }
 
   // Function to find element with retries and timeout
   const findElement = async <T extends Element>(
@@ -173,7 +178,8 @@ export async function submitPrompt(
   text: string,
   model: ModelDetails,
   overlayMessage: string,
-  layoutErrorMessage?: string
+  layoutErrorMessage?: string,
+  pageTitle?: string
 ): Promise<void> {
   return new Promise(async (resolve, reject) => {
     try {
@@ -229,7 +235,7 @@ export async function submitPrompt(
             await browser.scripting.executeScript({
               target: { tabId: tab.id },
               func: submitPromptToTextarea,
-              args: [text, model, layoutErrorMessage],
+              args: [text, model, layoutErrorMessage, pageTitle],
             });
           } else {
             throw new Error("Tab ID is undefined");
