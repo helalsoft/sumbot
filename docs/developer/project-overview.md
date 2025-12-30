@@ -62,20 +62,20 @@ SumBot extracts content from web pages and YouTube videos using specialized extr
 
 The prompt generation system supports:
 
-- Custom user-defined commands with variables
-- Default commands for different contexts (page, YouTube, selected text)
-- Variable substitution with default and user-defined variables
+-   Custom user-defined commands with variables
+-   Default commands for different contexts (page, YouTube, selected text)
+-   Variable substitution with default and user-defined variables
 
 ### Model Integration
 
 SumBot supports multiple AI chat models including:
 
-- ChatGPT
-- Perplexity
-- Gemini
-- Claude
-- Grok
-- DeepSeek
+-   ChatGPT
+-   Perplexity
+-   Gemini
+-   Claude
+-   Grok
+-   DeepSeek
 
 Each model has specific integration code for submitting prompts and handling responses.
 
@@ -83,11 +83,11 @@ Each model has specific integration code for submitting prompts and handling res
 
 The extension detects and processes the `sumbot_prompt` URL parameter on supported model websites, automatically filling the input field with the provided text.
 
+> [!NOTE]
+> Note: This feature is currently not supported on Perplexity due to their security policies blocking URL parameters.
+
 ## Technology Stack
 
-- **Framework**: Built with [WXT](https://wxt.dev/) (Web Extension Tools)
-- **UI**: React with Tailwind CSS for styling
-- **State Management**: React hooks and context
 - **Storage**: Browser extension storage API with type-safe wrappers
 - **Internationalization**: WXT i18n module with YAML-based translations
 - **Language**: TypeScript

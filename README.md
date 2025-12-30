@@ -103,6 +103,9 @@ This feature is useful for:
 - Sharing links with specific prompts
 - Integrating with other tools and workflows
 
+> [!IMPORTANT]
+> **Perplexity Limitation**: Perplexity.ai has security measures that block requests with complex query parameters. As a result, the `sumbot_prompt` parameter does not work on Perplexity.
+
 ## Browser Permissions
 
 The extension requires several permissions to function properly:

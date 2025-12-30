@@ -59,6 +59,8 @@ async function processTab(tab: chrome.tabs.Tab): Promise<void>;
 
 The `handleUrlParameters` function detects and processes the `sumbot_prompt` URL parameter:
 
+**Note**: Perplexity blocks requests with query parameters like `sumbot_prompt`, so this feature is disabled or non-functional for Perplexity.
+
 ```typescript
 async function handleUrlParameters(tab: { url?: string; id?: number }): Promise<void>;
 ```
