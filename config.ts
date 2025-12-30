@@ -72,7 +72,7 @@ export const models = {
   Perplexity: {
     url: "https://perplexity.ai/",
     input: [`div#ask-input[contenteditable="true"][data-lexical-editor="true"]`],
-    button: [`button[data-testid="submit-button"]`],
+    button: ["button:has(svg use[*|href$='pplx-icon-arrow-right'])"],
   },
   Grok: {
     url: "https://x.com/i/grok",
