@@ -53,17 +53,20 @@ function removeProcessingOverlay(): void {
 
 export async function submitPromptToTextarea(
   promptText: string,
-  model: ModelDetails
+  model: ModelDetails,
+  layoutErrorMessage?: string
 ): Promise<void> {
   console.log("Executing script in the tab");
 
-  // Function to find element with indefinite retries
+  // Function to find element with retries and timeout
   const findElement = async <T extends Element>(
     selectors: string[],
     elementType: string,
-    timeout = 500
+    timeout = 500,
+    maxRetries = 20 // Approx 10 seconds total
   ): Promise<T> => {
-    return new Promise(resolve => {
+    let retries = 0;
+    return new Promise((resolve, reject) => {
       const checkForElement = () => {
         for (const selector of selectors) {
           const element = document.querySelector<T>(selector);
@@ -72,7 +75,14 @@ export async function submitPromptToTextarea(
             return resolve(element);
           }
         }
-        console.log(`${elementType} element not found, retrying...`);
+
+        retries++;
+        if (retries >= maxRetries) {
+          console.error(`${elementType} element not found after ${maxRetries} retries.`);
+          return reject(new Error(`${elementType} element not found`));
+        }
+
+        console.log(`${elementType} element not found, retrying (${retries}/${maxRetries})...`);
         setTimeout(checkForElement, timeout);
       };
 
@@ -80,82 +90,90 @@ export async function submitPromptToTextarea(
     });
   };
 
-  // Find input element with retries
-  console.log("Searching for input element...");
-  const inputEl = await findElement<HTMLElement>(model.input, "input");
+  try {
+    // Find input element with retries
+    console.log("Searching for input element...");
+    const inputEl = await findElement<HTMLElement>(model.input, "input");
 
-  console.log("Found input element, setting value", inputEl);
+    console.log("Found input element, setting value", inputEl);
 
-  // Set value based on element type
-  switch (true) {
-    case inputEl instanceof HTMLTextAreaElement:
-      console.log("Setting value for HTMLTextAreaElement");
-      inputEl.value = promptText;
-      break;
-    case inputEl instanceof HTMLParagraphElement:
-      console.log("Setting innerText for HTMLParagraphElement");
-      inputEl.innerText = promptText;
-      break;
-    case inputEl instanceof HTMLDivElement:
-      console.log("Simulating input for HTMLDivElement");
-      inputEl.focus();
-      document.execCommand("insertText", false, promptText);
-      break;
-    default:
-      console.error("Unexpected element type:", inputEl);
-      throw new Error("Unexpected element type");
-  }
+    // Set value based on element type
+    switch (true) {
+      case inputEl instanceof HTMLTextAreaElement:
+        console.log("Setting value for HTMLTextAreaElement");
+        inputEl.value = promptText;
+        break;
+      case inputEl instanceof HTMLParagraphElement:
+        console.log("Setting innerText for HTMLParagraphElement");
+        inputEl.innerText = promptText;
+        break;
+      case inputEl instanceof HTMLDivElement:
+        console.log("Simulating input for HTMLDivElement");
+        inputEl.focus();
+        document.execCommand("insertText", false, promptText);
+        break;
+      default:
+        console.error("Unexpected element type:", inputEl);
+        throw new Error("Unexpected element type");
+    }
 
-  // Dispatch input event to trigger any listeners
-  const inputEvent = new Event("input", { bubbles: true });
-  inputEl.dispatchEvent(inputEvent);
+    // Dispatch input event to trigger any listeners
+    const inputEvent = new Event("input", { bubbles: true });
+    inputEl.dispatchEvent(inputEvent);
 
-  console.log("Set input value and dispatched input event");
+    console.log("Set input value and dispatched input event");
 
-  // Wait for 1 second for UI changes
-  await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait for 1 second for UI changes
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-  // Find button element with retries
-  console.log("Searching for button element...");
-  const buttonEl = await findElement<HTMLButtonElement>(model.button, "button");
+    // Find button element with retries
+    console.log("Searching for button element...");
+    const buttonEl = await findElement<HTMLButtonElement>(model.button, "button");
 
-  console.log("Found button element, clicking", buttonEl);
-  buttonEl.click();
+    console.log("Found button element, clicking", buttonEl);
+    buttonEl.click();
 
-  // Remove processing overlay after clicking the submit button
-  const overlay = document.getElementById("sumbot-processing-overlay");
-  const style = document.getElementById("sumbot-overlay-style");
-  if (overlay) overlay.remove();
-  if (style) style.remove();
+    // Wait for 1 second
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-  // Wait for 1 second
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  // Clean input if model.cleanInput is true
-  if (model.cleanInput) {
-    const cleanInterval = setInterval(() => {
-      switch (true) {
-        case inputEl instanceof HTMLTextAreaElement && inputEl.value !== "":
-          inputEl.value = "";
-          break;
-        case inputEl instanceof HTMLParagraphElement && inputEl.innerText !== "":
-          inputEl.innerText = "";
-          break;
-        case !(inputEl instanceof HTMLTextAreaElement || inputEl instanceof HTMLParagraphElement):
-          console.error("Unexpected element type:", inputEl);
-          clearInterval(cleanInterval);
-          throw new Error("Unexpected element type");
-        default:
-          clearInterval(cleanInterval);
-      }
-    }, 100);
+    // Clean input if model.cleanInput is true
+    if (model.cleanInput) {
+      const cleanInterval = setInterval(() => {
+        switch (true) {
+          case inputEl instanceof HTMLTextAreaElement && inputEl.value !== "":
+            inputEl.value = "";
+            break;
+          case inputEl instanceof HTMLParagraphElement && inputEl.innerText !== "":
+            inputEl.innerText = "";
+            break;
+          case !(inputEl instanceof HTMLTextAreaElement || inputEl instanceof HTMLParagraphElement):
+            console.error("Unexpected element type:", inputEl);
+            clearInterval(cleanInterval);
+            throw new Error("Unexpected element type");
+          default:
+            clearInterval(cleanInterval);
+        }
+      }, 100);
+    }
+  } catch (error) {
+    console.error("Error in submitPromptToTextarea:", error);
+    if (layoutErrorMessage) {
+      alert(layoutErrorMessage);
+    }
+  } finally {
+    // Remove processing overlay in all cases
+    const overlay = document.getElementById("sumbot-processing-overlay");
+    const style = document.getElementById("sumbot-overlay-style");
+    if (overlay) overlay.remove();
+    if (style) style.remove();
   }
 }
 
 export async function submitPrompt(
   text: string,
   model: ModelDetails,
-  overlayMessage: string
+  overlayMessage: string,
+  layoutErrorMessage?: string
 ): Promise<void> {
   return new Promise(async (resolve, reject) => {
     try {
@@ -211,7 +229,7 @@ export async function submitPrompt(
             await browser.scripting.executeScript({
               target: { tabId: tab.id },
               func: submitPromptToTextarea,
-              args: [text, model],
+              args: [text, model, layoutErrorMessage],
             });
           } else {
             throw new Error("Tab ID is undefined");

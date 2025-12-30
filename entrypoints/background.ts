@@ -145,8 +145,9 @@ function processTab(tab: chrome.tabs.Tab): void {
 
       // Submit prompt - overlay will be shown on model page, not source tab
       const overlayMessage = i18n.t("sendingContentMessage");
+      const layoutErrorMessage = i18n.t("layoutChangedError");
       await Promise.all([
-        submitPrompt(promptText, model, overlayMessage),
+        submitPrompt(promptText, model, overlayMessage, layoutErrorMessage),
         setIconState("default", tab.id),
       ]);
     } catch (error) {
@@ -246,10 +247,11 @@ async function handleUrlParameters(tab: { url?: string; id?: number }): Promise<
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     // Execute script to submit the prompt (overlay will be removed after button click)
+    const layoutErrorMessage = i18n.t("layoutChangedError");
     await browser.scripting.executeScript({
       target: { tabId: tab.id },
       func: submitPromptToTextarea,
-      args: [promptParam, matchingModel],
+      args: [promptParam, matchingModel, layoutErrorMessage],
     });
 
     // Clean up the URL by removing the parameter
@@ -442,7 +444,8 @@ async function handleContextMenuClick(
 
       // Submit prompt - overlay will be shown on model page, not source tab
       const overlayMessage = i18n.t("sendingContentMessage");
-      await submitPrompt(promptText, model, overlayMessage);
+      const layoutErrorMessage = i18n.t("layoutChangedError");
+      await submitPrompt(promptText, model, overlayMessage, layoutErrorMessage);
 
       // Update command timestamp
       const timestamps = await getStorageItemSafe(STORAGE_KEYS.COMMAND_TIMESTAMPS);

@@ -98,3 +98,4 @@ generateTodoList: Generate To-Do List
 generateTodoListPrompt: >-
   Generate a to-do list for the following text in $1: $2
 noContentExtracted: No content extracted.
+layoutChangedError: The HTML layout of this website may have changed. This issue will be addressed in the next release.

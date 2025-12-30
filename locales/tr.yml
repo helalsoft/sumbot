@@ -97,3 +97,4 @@ generateTodoList: Yapılacaklar Listesi Oluştur
 generateTodoListPrompt: >-
   Aşağıdaki metin için $1 dilinde bir yapılacaklar listesi oluştur: $2
 noContentExtracted: İçeriğe erişilemedi.
+layoutChangedError: Bu web sitesinin HTML düzeni değişmiş olabilir. Bu sorun bir sonraki sürümde giderilecektir.
