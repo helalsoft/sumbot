@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { type ModelName, models } from "@/config";
 import { STORAGE_KEYS, getStorageItemSafe, setStorageItemSafe } from "@/utils/storage";
 import { i18n } from "#i18n";
-import { submitPrompt } from "@/utils/promptSubmitter";
+import { browser } from "wxt/browser";
 
 interface ModelSelectorProps {
   className?: string;
@@ -40,17 +40,11 @@ const ModelSelector = ({ className = "" }: ModelSelectorProps) => {
   };
 
   const handleTestAllModels = async () => {
-    const testText = "Test";
-    const overlayMessage = i18n.t("sendingContentMessage");
-    await Promise.all(
-      Object.keys(models).map(async modelKey => {
-        try {
-          await submitPrompt(testText, models[modelKey as ModelName], overlayMessage);
-        } catch (error) {
-          console.error(`Failed to test model ${modelKey}:`, error);
-        }
-      })
-    );
+    try {
+      await browser.runtime.sendMessage({ type: "TEST_ALL_MODELS" });
+    } catch (error) {
+      console.error("Failed to trigger test all models:", error);
+    }
   };
 
   return (

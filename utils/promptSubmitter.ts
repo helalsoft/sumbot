@@ -235,7 +235,7 @@ export async function submitPrompt(
             await browser.scripting.executeScript({
               target: { tabId: tab.id },
               func: submitPromptToTextarea,
-              args: [text, model, layoutErrorMessage, pageTitle],
+              args: [text, model, layoutErrorMessage ?? "", pageTitle ?? ""],
             });
           } else {
             throw new Error("Tab ID is undefined");

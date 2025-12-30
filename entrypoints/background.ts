@@ -1,4 +1,4 @@
-import { models, iconPaths, type IconStateType, type Context, type ModelDetails } from "@/config";
+import { models, iconPaths, type IconStateType, type Context, type ModelDetails, type ModelName } from "@/config";
 
 // Helper to handle both action and browserAction APIs
 const browserAction = browser.action || browser.browserAction;
@@ -501,6 +501,31 @@ export default defineBackground(() => {
   browser.contextMenus.onClicked.addListener((info: any, tab?: any) =>
     handleContextMenuClick(info, tab)
   );
+
+  // Handle messages from other parts of the extension
+  browser.runtime.onMessage.addListener((message) => {
+    if (message.type === "TEST_ALL_MODELS") {
+      const testText = "Test";
+      const overlayMessage = i18n.t("sendingContentMessage");
+      const layoutErrorMessage = i18n.t("layoutChangedError");
+      
+      // Execute test for all models sequentially
+      (async () => {
+        for (const modelKey of Object.keys(models)) {
+          try {
+            await submitPrompt(
+              testText,
+              models[modelKey as ModelName],
+              overlayMessage,
+              layoutErrorMessage
+            );
+          } catch (error) {
+            console.error(`Failed to test model ${modelKey}:`, error);
+          }
+        }
+      })();
+    }
+  });
 
   // Add listener for when user switches to a different tab
   browser.tabs.onActivated.addListener(async activeInfo => {
