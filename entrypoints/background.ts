@@ -11,7 +11,7 @@ import {
   removeProcessingOverlay,
 } from "@/utils/promptSubmitter";
 import { selectModel } from "@/utils/modelSelector";
-import { isYouTube, getUrlParameter } from "@/utils/url";
+import { isYouTube, isYouTubeVideo, getUrlParameter } from "@/utils/url";
 import { STORAGE_KEYS, getStorageItemSafe } from "@/utils/storage";
 import { i18n } from "#i18n";
 
@@ -48,6 +48,11 @@ function getTabIconState(tabId: number, url: string | undefined): IconStateType 
 
   // Check if browser page or matching model URL
   if (isBrowserPage(url) || isMatchingUrl(url)) {
+    return "disabled";
+  }
+
+  // Check if YouTube but not a video watch page
+  if (isYouTube(url) && !isYouTubeVideo(url)) {
     return "disabled";
   }
 
@@ -120,8 +125,8 @@ function processTab(tab: chrome.tabs.Tab): void {
       await setIconState("processing", tab.id);
       console.log("Starting content extraction");
 
-      // Check if the URL is from YouTube using the shared utility function
-      const data = isYouTube(tab.url) ? await extractYoutubeTranscript() : await extractText();
+      // Check if the URL is a YouTube video watch page
+      const data = isYouTubeVideo(tab.url) ? await extractYoutubeTranscript() : await extractText();
 
       if (data.content.length === 0) {
         if (tab.id) {
@@ -298,14 +303,6 @@ async function createDynamicContextMenus(): Promise<void> {
       contexts: ["page"],
     });
 
-    // Create parent menu for YouTube context (only visible on YouTube)
-    browser.contextMenus.create({
-      id: "sumbot-youtube",
-      title: i18n.t("youtubeCommandsMenuTitle"),
-      contexts: ["page"],
-      documentUrlPatterns: ["*://*.youtube.com/*"],
-    });
-
     // Create menu items for each command
     for (const [commandId, command] of Object.entries(userCommands)) {
       // Skip commands without names or prompts
@@ -337,12 +334,12 @@ async function createDynamicContextMenus(): Promise<void> {
 
       // Handle YouTube-specific commands only (not page commands on YouTube)
       if (command.context === "youtube") {
-        // Show only YouTube-specific commands on YouTube pages
+        // Show only YouTube-specific commands on YouTube pages at the top level
         browser.contextMenus.create({
           id: `youtube-${commandId}`,
           title: command.name,
-          parentId: "sumbot-youtube",
           contexts: ["page"],
+          documentUrlPatterns: ["https://www.youtube.com/watch*"],
         });
       }
     }
@@ -417,7 +414,7 @@ async function handleContextMenuClick(
       if (context === "selection" && info.selectionText) {
         // For selection, we only use the selected text - context is always page
         data = { title: tab.title, content: info.selectionText };
-      } else if (context === "youtube" || (isYouTube(tab.url) && context === "page")) {
+      } else if (context === "youtube" || (isYouTubeVideo(tab.url) && context === "page")) {
         data = await extractYoutubeTranscript();
       } else {
         data = await extractText();
@@ -465,7 +462,7 @@ async function handleContextMenuClick(
 }
 
 async function getCommandKey(data: Partial<ExtractedContent>): Promise<string> {
-  const isYouTubeContent = isYouTube(data.url);
+  const isYouTubeContent = isYouTubeVideo(data.url);
 
   if (isYouTubeContent) {
     return await getStorageItemSafe(STORAGE_KEYS.DEFAULT_YOUTUBE_COMMAND);

@@ -12,6 +12,15 @@ export function isYouTube(url: string | undefined): boolean {
 }
 
 /**
+ * Checks if a URL is a YouTube video watch page
+ * @param url The URL to check
+ * @returns True if the URL starts with https://www.youtube.com/watch
+ */
+export function isYouTubeVideo(url: string | undefined): boolean {
+  return !!url?.startsWith("https://www.youtube.com/watch");
+}
+
+/**
  * Gets a URL parameter value by name
  * @param url The URL to extract the parameter from
  * @param paramName The name of the parameter to extract
