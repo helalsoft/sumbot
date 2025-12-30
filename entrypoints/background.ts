@@ -259,6 +259,17 @@ async function handleUrlParameters(tab: { url?: string; id?: number }): Promise<
       args: [promptParam, matchingModel, layoutErrorMessage],
     });
 
+    // Set the page title to the prompt (trimmed if too long)
+    const maxTitleLength = 200;
+    const pageTitle = promptParam.length > maxTitleLength 
+      ? promptParam.substring(0, maxTitleLength) + "..." 
+      : promptParam;
+    await browser.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: (title: string) => { document.title = title; },
+      args: [pageTitle],
+    });
+
     // Clean up the URL by removing the parameter
     const cleanUrl = new URL(tab.url);
     cleanUrl.searchParams.delete("sumbot_prompt");
