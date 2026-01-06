@@ -75,11 +75,9 @@ export const models = {
     button: ["button:has(svg use[*|href$='pplx-icon-arrow-right'])"],
   },
   Grok: {
-    url: "https://x.com/i/grok",
-    input: ["div div div textarea"],
-    button: [
-      "button[aria-label*='Grok'][type='button']:has(svg path[d='M12 3.59l7.457 7.45-1.414 1.42L13 7.41V21h-2V7.41l-5.043 5.05-1.414-1.42L12 3.59z'])",
-    ],
+    url: "https://grok.com/",
+    input: ["textarea", "div[contenteditable='true']"],
+    button: ["button[type='submit']"],
   },
   Gemini: {
     url: "https://gemini.google.com/app",
